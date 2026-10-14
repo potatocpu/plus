@@ -1,6 +1,9 @@
 #include <iostream>
 #include <array>
 #include <string_view>
+#include <filesystem>
+
+namespace fs = std::filesystem;
 
 enum class CommandId { Run, Help };
 
@@ -23,6 +26,14 @@ void showHelp() {
     }
 }
 
+std::vector<std::string> bringFiles() {
+    std::vector<std::string> files;
+    for (const auto& entry: fs::directory_iterator("compile_me")) {
+        files.push_back(entry.path().string());
+    }
+    return files;
+}
+
 int main(int argc, char *argv[]) {
     if (argc - 1 == 0) {
         showHelp();
@@ -40,6 +51,11 @@ int main(int argc, char *argv[]) {
     if (arg == "run") {
         //   // looks for src, list the files and collect them in a vec, sort
         //   them, compile them
+        auto files = bringFiles();
+
+        for (const auto& file : files) {
+            std::cout << file << "\n";
+        }
     }
 
     return 0;
