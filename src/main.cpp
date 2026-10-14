@@ -1,8 +1,8 @@
-#include <iostream>
-#include <array>
-#include <string_view>
-#include <filesystem>
 #include <algorithm>
+#include <array>
+#include <filesystem>
+#include <iostream>
+#include <string_view>
 
 namespace fs = std::filesystem;
 
@@ -20,7 +20,6 @@ constexpr std::array commands{
     Command{CommandId::Build, "build", "compile the files"},
 };
 
-
 void showHelp() {
     std::cout << "Help table\n\n";
     for (auto command : commands) {
@@ -30,7 +29,7 @@ void showHelp() {
 
 std::vector<fs::path> bringFiles() {
     std::vector<fs::path> files;
-    for (const auto& entry: fs::directory_iterator("compile_me")) {
+    for (const auto &entry : fs::directory_iterator("compile_me")) {
         if (entry.path().extension() == ".cpp") {
             files.push_back(entry.path());
         }
@@ -48,54 +47,86 @@ int main(int argc, char *argv[]) {
     }
 
     std::string_view arg = argv[1];
-if (arg == "help") {
-    showHelp();
-}
-if (arg == "run") {
-     auto files = bringFiles();
+    if (arg == "help") {
+        showHelp();
+    }
+    if (arg == "build") {
+        auto files = bringFiles();
 
-    if (files.empty()) {
-        std::cerr << "No .cpp files found\n";
-        return 1;
+        if (files.empty()) {
+            std::cerr << "No .cpp files found\n";
+            return 1;
+        }
+
+        fs::path output_dir = "target/debug";
+        fs::create_directories(output_dir);
+
+        std::string project_name = fs::current_path().filename().string();
+
+        fs::path output = output_dir / project_name;
+
+        std::string command = "clang++ -std=c++20 -Wall -Wextra "
+                              "-fsanitize=address,undefined -g ";
+
+        for (const auto &file : files) {
+            command += "\"" + file.string() + "\" ";
+        }
+
+        command += "-o \"" + output.string() + "\"";
+
+        std::cout << "Compiling project: " << project_name << '\n';
+
+        int result = std::system(command.c_str());
+
+        if (result != 0) {
+            std::cerr << "Compilation failed\n";
+            return 1;
+        }
+        std::cout << "Build successful: " << output.string() << '\n';
     }
 
-    fs::path output_dir = "target/debug";
-    fs::create_directories(output_dir);
+    if (arg == "run") {
+        auto files = bringFiles();
 
-    std::string project_name =
-        fs::current_path().filename().string();
+        if (files.empty()) {
+            std::cerr << "No .cpp files found\n";
+            return 1;
+        }
 
-    fs::path output = output_dir / project_name;
+        fs::path output_dir = "target/debug";
+        fs::create_directories(output_dir);
 
-    std::string command =
-        "clang++ -std=c++20 -Wall -Wextra "
-        "-fsanitize=address,undefined -g ";
+        std::string project_name = fs::current_path().filename().string();
 
-    for (const auto& file : files) {
-        command += "\"" + file.string() + "\" ";
+        fs::path output = output_dir / project_name;
+
+        std::string command = "clang++ -std=c++20 -Wall -Wextra "
+                              "-fsanitize=address,undefined -g ";
+
+        for (const auto &file : files) {
+            command += "\"" + file.string() + "\" ";
+        }
+
+        command += "-o \"" + output.string() + "\"";
+
+        std::cout << "Compiling project: " << project_name << '\n';
+
+        int result = std::system(command.c_str());
+
+        if (result != 0) {
+            std::cerr << "Compilation failed\n";
+            return 1;
+        }
+        std::cout << "Build successful: " << output.string() << '\n';
+        command = "./" + output.string();
+        std::cout << command << "\n";
+        result = std::system(command.c_str());
+
+        // make this a helper later
+        if (result != 0) {
+            std::cerr << "Running error\n";
+            return 1;
+        }
     }
-
-    command += "-o \"" + output.string() + "\"";
-
-    std::cout << "Compiling project: " << project_name << '\n';
-
-    int result = std::system(command.c_str());
-
-    if (result != 0) {
-        std::cerr << "Compilation failed\n";
-        return 1;
-    }
-    std::cout << "Build successful: " << output.string() << '\n';
-    command = "./" + output.string();
-    std::cout << command << "\n";
-    result = std::system(command.c_str());
-
-    // make this a helper later
-    if (result != 0) {
-        std::cerr << "Running error\n";
-        return 1;
-    }
-
-} return 0;
-
+    return 0;
 }
