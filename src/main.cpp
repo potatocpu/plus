@@ -1,5 +1,5 @@
 #include <iostream>
-void showHel() {}
+void showHelp() {}
 
 int main(int argc, char *argv[]) {
     if (argc - 1 == 0) {
