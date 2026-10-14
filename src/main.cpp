@@ -27,11 +27,11 @@ void showHelp() {
     }
 }
 
-std::vector<std::string> bringFiles() {
-    std::vector<std::string> files;
+std::vector<fs::path> bringFiles() {
+    std::vector<fs::path> files;
     for (const auto& entry: fs::directory_iterator("compile_me")) {
         if (entry.path().extension() == ".cpp") {
-            files.push_back(entry.path().string());
+            files.push_back(entry.path());
         }
     }
     std::sort(files.begin(), files.end());
@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
         auto files = bringFiles();
 
         for (const auto& file : files) {
-            std::cout << file << "\n";
+            std::cout << file.string() << "\n";
         }
     }
 
