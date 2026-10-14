@@ -38,6 +38,13 @@ std::vector<fs::path> bringFiles() {
     return files;
 }
 
+int noCpp(std::vector<fs::path> files) {
+    if (files.empty()) {
+        std::cerr << "No .cpp files found\n";
+        return 1;
+        }
+    return 0;
+}
 int main(int argc, char *argv[]) {
     if (argc - 1 == 0) {
         showHelp();
@@ -72,9 +79,8 @@ int main(int argc, char *argv[]) {
     if (arg == "build") {
         auto files = bringFiles();
 
-        if (files.empty()) {
-            std::cerr << "No .cpp files found\n";
-            return 1;
+        if(noCpp(files)){
+            return 0;
         }
 
         fs::path output_dir = "target/debug";
@@ -107,9 +113,8 @@ int main(int argc, char *argv[]) {
     if (arg == "run") {
         auto files = bringFiles();
 
-        if (files.empty()) {
-            std::cerr << "No .cpp files found\n";
-            return 1;
+        if(noCpp(files)){
+            return 0;
         }
 
         fs::path output_dir = "target/debug";
