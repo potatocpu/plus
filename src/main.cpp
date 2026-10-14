@@ -39,11 +39,10 @@ std::vector<fs::path> bringFiles() {
 }
 
 int main(int argc, char *argv[]) {
-    if (!fs::is_directory("src")) {
-        std::cerr << "Error: src is not a directory\n";
-        return 1;
+    std::string_view arg = argv[1];
+    if (arg == "help") {
+        showHelp();
     }
-
     if (argc - 1 == 0) {
         showHelp();
 
@@ -51,7 +50,11 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    std::string_view arg = argv[1];
+    if (!fs::is_directory("src")) {
+        std::cerr << "Error: src is not a directory\n";
+        return 1;
+    }
+
     bool found = false;
 
     for (const auto &command : commands) {
@@ -65,9 +68,6 @@ int main(int argc, char *argv[]) {
         std::cerr << "Unknown command: " << arg << '\n';
         showHelp();
         return 1;
-    }
-    if (arg == "help") {
-        showHelp();
     }
     if (arg == "build") {
         auto files = bringFiles();
