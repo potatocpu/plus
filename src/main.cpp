@@ -1,5 +1,7 @@
 #include <iostream>
-void showHelp int main(int argc, char *argv[]) {
+void showHel() {}
+
+int main(int argc, char *argv[]) {
     if (argc - 1 == 0) {
         // show func help
         std::cerr << "at least one argument\n";
