@@ -29,7 +29,7 @@ void showHelp() {
 
 std::vector<fs::path> bringFiles() {
     std::vector<fs::path> files;
-    for (const auto &entry : fs::directory_iterator("compile_me")) {
+    for (const auto &entry : fs::directory_iterator("src")) {
         if (entry.path().extension() == ".cpp") {
             files.push_back(entry.path());
         }
@@ -39,6 +39,11 @@ std::vector<fs::path> bringFiles() {
 }
 
 int main(int argc, char *argv[]) {
+    if (!fs::is_directory("src")) {
+        std::cerr << "Error: src is not a directory\n";
+        return 1;
+    }
+
     if (argc - 1 == 0) {
         showHelp();
 
@@ -47,6 +52,20 @@ int main(int argc, char *argv[]) {
     }
 
     std::string_view arg = argv[1];
+    bool found = false;
+
+    for (const auto &command : commands) {
+        if (command.name == arg) {
+            found = true;
+            break;
+        }
+    }
+
+    if (!found) {
+        std::cerr << "Unknown command: " << arg << '\n';
+        showHelp();
+        return 1;
+    }
     if (arg == "help") {
         showHelp();
     }
@@ -118,8 +137,7 @@ int main(int argc, char *argv[]) {
             return 1;
         }
         std::cout << "Build successful: " << output.string() << '\n';
-        command = "./" + output.string();
-        std::cout << command << "\n";
+        command = "\"./" + output.string() + "\"";
         result = std::system(command.c_str());
 
         // make this a helper later
