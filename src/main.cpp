@@ -1,6 +1,5 @@
 #include <iostream>
-void showHelp
-int main(int argc, char* argv[]) {
+void showHelp int main(int argc, char *argv[]) {
     if (argc - 1 == 0) {
         // show func help
         std::cerr << "at least one argument\n";
@@ -13,7 +12,8 @@ int main(int argc, char* argv[]) {
     }
 
     if (arg == "run") {
-        //   // looks for src, list the files and collect them in a vec, sort them, compile them
+        //   // looks for src, list the files and collect them in a vec, sort
+        //   them, compile them
     }
 
     return 0;
