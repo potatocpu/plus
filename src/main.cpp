@@ -2,6 +2,7 @@
 #include <array>
 #include <string_view>
 #include <filesystem>
+#include <algorithm>
 
 namespace fs = std::filesystem;
 
@@ -29,8 +30,11 @@ void showHelp() {
 std::vector<std::string> bringFiles() {
     std::vector<std::string> files;
     for (const auto& entry: fs::directory_iterator("compile_me")) {
-        files.push_back(entry.path().string());
+        if (entry.path().extension() == ".cpp") {
+            files.push_back(entry.path().string());
+        }
     }
+    std::sort(files.begin(), files.end());
     return files;
 }
 
