@@ -17,6 +17,7 @@ constexpr std::array commands{
 
 
 void showHelp() {
+    std::cout << "Help table\n\n";
     for (auto command : commands) {
         std::cout << command.name << ": " << command.description << "\n";
     }
