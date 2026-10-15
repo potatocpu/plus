@@ -45,10 +45,15 @@ int noCpp(std::vector<fs::path> files) {
         }
     return 0;
 }
-int main(int argc, char *argv[]) {
-    if (argc - 1 == 0) {
-        showHelp();
 
+void createOutput() {
+    fs::path output_dir = "target/debug";
+    fs::create_directories(output_dir);
+}
+
+int main(int argc, char *argv[]) {
+    if (argc < 2) {
+        showHelp();
         std::cerr << "at least one argument\n";
         return 1;
     }
