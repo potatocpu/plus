@@ -1,8 +1,12 @@
 #include <algorithm>
 #include <array>
+#include <cstdlib>
 #include <filesystem>
 #include <iostream>
+#include <optional>
+#include <string>
 #include <string_view>
+#include <vector>
 
 namespace fs = std::filesystem;
 
@@ -38,17 +42,72 @@ std::vector<fs::path> bringFiles() {
     return files;
 }
 
-int noCpp(std::vector<fs::path> files) {
+bool noCpp(const std::vector<fs::path> &files) {
     if (files.empty()) {
         std::cerr << "No .cpp files found\n";
-        return 1;
+        return true;
+    }
+    return false;
+}
+
+std::optional<Command> lookForCommand(std::string_view arg) {
+    for (const auto &command : commands) {
+        if (command.name == arg) {
+            return command;
         }
+    }
+    return std::nullopt;
+}
+
+fs::path createOutput() {
+    fs::path output_dir = "target/debug";
+    fs::create_directories(output_dir);
+    return output_dir / fs::current_path().filename();
+}
+
+std::string compileCommand(const std::vector<fs::path> &files,
+                           const fs::path &output) {
+    std::string command = "clang++ -std=c++20 -Wall -Wextra "
+                          "-fsanitize=address,undefined -g ";
+    for (const auto &file : files) {
+        command += "\"" + file.string() + "\" ";
+    }
+    command += "-o \"" + output.string() + "\"";
+    return command;
+}
+
+int build(const fs::path &output) {
+    if (!fs::is_directory("src")) {
+        std::cerr << "Error: src is not a directory\n";
+        return 1;
+    }
+
+    auto files = bringFiles();
+    if (noCpp(files)) {
+        return 1;
+    }
+
+    std::cout << "Compiling project: " << output.filename().string() << '\n' << std::flush;
+
+    if (std::system(compileCommand(files, output).c_str()) != 0) {
+        std::cerr << "Compilation failed\n";
+        return 1;
+    }
+    std::cout << "Build successful: " << output.string() << '\n' << std::flush;
     return 0;
 }
 
-void createOutput() {
-    fs::path output_dir = "target/debug";
-    fs::create_directories(output_dir);
+int run(const fs::path &output) {
+    if (build(output) != 0) {
+        return 1;
+    }
+
+    std::string command = "\"./" + output.string() + "\"";
+    if (std::system(command.c_str()) != 0) {
+        std::cerr << "Running error\n";
+        return 1;
+    }
+    return 0;
 }
 
 int main(int argc, char *argv[]) {
@@ -57,104 +116,24 @@ int main(int argc, char *argv[]) {
         std::cerr << "at least one argument\n";
         return 1;
     }
+
     std::string_view arg = argv[1];
-    if (arg == "help") {
-        showHelp();
-        return 0;
-    }
+    auto command = lookForCommand(arg);
 
-    bool found = false;
-
-    for (const auto &command : commands) {
-        if (command.name == arg) {
-            found = true;
-            break;
-        }
-    }
-
-    if (!found) {
+    if (!command) {
         std::cerr << "Unknown command: " << arg << '\n';
         showHelp();
         return 1;
     }
-    if (!fs::is_directory("src")) {
-        std::cerr << "Error: src is not a directory\n";
-        return 1;
-    }
-    if (arg == "build") {
-        auto files = bringFiles();
 
-        if(noCpp(files)){
+    switch (command->id) {
+        case CommandId::Help:
+            showHelp();
             return 0;
-        }
-
-        fs::path output_dir = "target/debug";
-        fs::create_directories(output_dir);
-
-        std::string project_name = fs::current_path().filename().string();
-
-        fs::path output = output_dir / project_name;
-
-        std::string command = "clang++ -std=c++20 -Wall -Wextra "
-                              "-fsanitize=address,undefined -g ";
-
-        for (const auto &file : files) {
-            command += "\"" + file.string() + "\" ";
-        }
-
-        command += "-o \"" + output.string() + "\"";
-
-        std::cout << "Compiling project: " << project_name << '\n';
-
-        int result = std::system(command.c_str());
-
-        if (result != 0) {
-            std::cerr << "Compilation failed\n";
-            return 1;
-        }
-        std::cout << "Build successful: " << output.string() << '\n';
-    }
-
-    if (arg == "run") {
-        auto files = bringFiles();
-
-        if(noCpp(files)){
-            return 0;
-        }
-
-        fs::path output_dir = "target/debug";
-        fs::create_directories(output_dir);
-
-        std::string project_name = fs::current_path().filename().string();
-
-        fs::path output = output_dir / project_name;
-
-        std::string command = "clang++ -std=c++20 -Wall -Wextra "
-                              "-fsanitize=address,undefined -g ";
-
-        for (const auto &file : files) {
-            command += "\"" + file.string() + "\" ";
-        }
-
-        command += "-o \"" + output.string() + "\"";
-
-        std::cout << "Compiling project: " << project_name << '\n';
-
-        int result = std::system(command.c_str());
-
-        if (result != 0) {
-            std::cerr << "Compilation failed\n";
-            return 1;
-        }
-        std::cout << "Build successful: " << output.string() << '\n';
-        command = "\"./" + output.string() + "\"";
-        result = std::system(command.c_str());
-
-        // make this a helper later
-        if (result != 0) {
-            std::cerr << "Running error\n";
-            return 1;
-        }
+        case CommandId::Build:
+            return build(createOutput());
+        case CommandId::Run:
+            return run(createOutput());
     }
     return 0;
 }
